@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>쓰레기 대피소 — TRASH INCOMING</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Roboto:wght@500;600&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --danger: #e63946;
+    --warn: #f4a261;
+    --panel: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', 'Roboto', sans-serif;
+    background: linear-gradient(180deg, #1a1a2e 0%, #16213e 40%, #0f3460 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  /* ── Oswald global letter-spacing ── */
+  [class*="oswald"], .header h1, .overlay h2, .overlay button,
+  .score-box .val, .panel-h3, .merge-flash {
+    letter-spacing: -0.02em;
+  }
+
+  /* Stars */
+  .stars { position:fixed; width:100%; height:100%; pointer-events:none; z-index:0; }
+  .star { position:absolute; background:white; border-radius:50%; animation:twinkle 2s infinite alternate; }
+  @keyframes twinkle { from{opacity:0.2} to{opacity:1} }
+
+  /* ── TOP BAR: lang toggle ── */
+  .top-bar {
+    position: relative; z-index: 20;
+    width: 100%; max-width: 480px;
+    display: flex; justify-content: flex-end;
+    padding: 8px 14px 0;
+  }
+  .lang-toggle {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 14px;
+    color: #fff;
+    font-family: 'Roboto', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .lang-toggle:hover { background: rgba(255,255,255,0.14); }
+
+  /* ── HEADER ── */
+  .header {
+    position: relative; z-index: 10;
+    text-align: center; padding: 4px 16px 4px; width: 100%; max-width: 480px;
+  }
+  .header h1 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 700;
+    font-size: clamp(24px, 7vw, 36px);
+    color: #fff;
+    letter-spacing: -0.02em;
+    text-shadow: 0 0 24px rgba(255,100,50,0.8);
+    text-transform: uppercase;
+  }
+  .header .sub {
+    font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    font-size: 12px;
+    color: #f4a261;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
+  }
+
+  /* ── TICKER ── */
+  .ticker {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 480px;
+    background: rgba(230,57,70,0.15);
+    border: 1px solid rgba(230,57,70,0.4);
+    border-radius: 6px;
+    padding: 5px 0; margin: 4px auto;
+    overflow: hidden; white-space: nowrap;
+  }
+  .ticker-inner {
+    display: inline-block;
+    animation: scroll-ticker 24s linear infinite;
+    font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    font-size: 11px; color: #ffd6d6; letter-spacing: 0.3px;
+    padding: 0 12px;
+  }
+  @keyframes scroll-ticker {
+    from{transform:translateX(100%)} to{transform:translateX(-100%)}
+  }
+
+  /* ── ROW 1: Country strip ── */
+  .country-strip {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 480px;
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin: 4px 0;
+    gap: 8px;
+  }
+  .my-country {
+    display: flex; align-items: center; gap: 10px; flex: 1;
+  }
+  .my-flag { font-size: 32px; line-height: 1; }
+  .my-info {}
+  .my-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 11px; font-weight: 400;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+  }
+  .my-name {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 15px; font-weight: 700; color: #fff;
+    line-height: 1.2;
+  }
+  .my-sub {
+    font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+    font-size: 10px; font-weight: 500; color: rgba(255,110,110,0.9);
+  }
+  .divider-v {
+    width: 1px; height: 40px;
+    background: var(--border); flex-shrink: 0;
+  }
+  .senders {
+    display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0;
+  }
+  .senders-label {
+    font-family: 'Oswald', sans-serif;
+    font-size: 10px; font-weight: 400;
+    color: rgba(255,200,100,0.7);
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    margin-bottom: 3px;
+  }
+  .senders-flags { font-size: 17px; line-height: 1.5; text-align: right; }
+
+  /* ── ROW 2: Score strip ── */
+  .score-strip {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 480px;
+    display: flex; gap: 8px;
+    padding: 0 0 4px;
+  }
+  .score-box {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  .score-label {
+    font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+    font-size: 10px; font-weight: 600;
+    color: rgba(255,255,255,0.5);
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .score-val {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px; font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #f4a261; line-height: 1.1;
+  }
+
+  /* ── ROW 2: Canvas ── */
+  .canvas-outer {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 480px;
+  }
+  .drop-zone {
+    background: rgba(255,255,255,0.05);
+    border: 2px solid var(--border); border-bottom: none;
+    border-radius: 10px 10px 0 0;
+    height: 36px; display: flex; align-items: center; justify-content: center;
+    font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+    font-size: 11px; color: rgba(255,255,255,0.4);
+    cursor: crosshair;
+  }
+  .danger-line {
+    position: absolute; top: 36px; left: 0; right: 0; height: 2px;
+    background: repeating-linear-gradient(90deg,#e63946 0,#e63946 6px,transparent 6px,transparent 12px);
+    pointer-events: none; opacity: 0.7; z-index: 2;
+  }
+  .canvas-wrap { position: relative; }
+  #gameCanvas {
+    display: block;
+    border: 2px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    cursor: crosshair;
+    width: 100%;
+    background: linear-gradient(180deg, #c9e8f5 0%, #b0d0e8 60%, #8fa8b8 100%);
+  }
+
+  /* Overlay */
+  .overlay {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.80); z-index: 50;
+    border-radius: 0 0 10px 10px;
+  }
+  .overlay h2 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 28px; font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(230,57,70,0.9);
+    margin-bottom: 8px; text-align: center; padding: 0 16px;
+  }
+  .overlay p {
+    font-family: 'Roboto', 'Noto Sans KR', sans-serif;
+    font-size: 13px; font-weight: 500;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 20px; text-align: center;
+    padding: 0 24px; line-height: 1.75;
+  }
+  .overlay button {
+    background: #e63946; color: #fff; border: none;
+    padding: 13px 36px; border-radius: 7px;
+    font-family: 'Oswald', sans-serif;
+    font-size: 17px; font-weight: 600;
+    letter-spacing: -0.02em;
+    text-transform: uppercase; cursor: pointer;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .overlay button:hover { transform:scale(1.05); box-shadow:0 0 24px rgba(230,57,70,0.6); }
+
+  /* ── ROW 3: Guide ── */
+  .guide-panel {
+    position: relative; z-index: 10;
+    width: 100%; max-width: 480px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 10px 8px;
+    margin: 4px 0 10px;
+  }
+  .guide-panel h3 {
+    font-family: 'Oswald', sans-serif;
+    font-size: 12px; font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #f4a261; text-transform: uppercase;
+    margin-bottom: 6px; padding: 8px 10px 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+    padding: 4px 8px 8px;
+  }
+  .trash-cell {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 6px 4px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 6px;
+  }
+  .trash-cell .tc-emoji { font-size: 18px; line-height: 1; }
+  .trash-cell .tc-name {
+    font-family: 'Noto Sans KR', 'Roboto', sans-serif;
+    font-size: 9px; color: rgba(255,255,255,0.75);
+    margin-top: 2px; text-align: center; line-height: 1.2;
+  }
+  .trash-cell .tc-req {
+    font-family: 'Roboto', sans-serif;
+    font-size: 9px; color: #f4a261;
+  }
+
+  /* Plane strip */
+  .plane-strip {
+    position: fixed; top: 0; width: 100%;
+    pointer-events: none; z-index: 5;
+    overflow: hidden; height: 40px;
+  }
+  .plane {
+    position: absolute; top: 8px; font-size: 20px;
+    animation: fly-plane linear infinite;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+  }
+  @keyframes fly-plane { from{left:-60px} to{left:calc(100% + 60px)} }
+  .plane-label {
+    position: absolute; top: 4px; left: 26px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 10px; color: rgba(255,200,100,0.9);
+    white-space: nowrap; background: rgba(0,0,0,0.55);
+    padding: 1px 6px; border-radius: 4px;
+  }
+
+  /* Merge flash */
+  .merge-flash {
+    position: absolute; pointer-events: none;
+    font-family: 'Oswald', sans-serif;
+    font-size: 17px; font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #f4a261; z-index: 30;
+    animation: flash-up 0.7s forwards;
+    text-shadow: 0 0 8px rgba(244,162,97,0.8);
+  }
+  @keyframes flash-up {
+    from{opacity:1;transform:translateY(0) scale(1.2)}
+    to{opacity:0;transform:translateY(-40px) scale(0.8)}
+  }
+</style>
+</head>
+<body>
+
+<div class="stars" id="stars"></div>
+<div class="plane-strip" id="planeStrip"></div>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <button class="lang-toggle" id="langToggle" onclick="toggleLang()">🌐 EN</button>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <h1 id="titleText">🌏 TRASH INCOMING 🗑️</h1>
+  <div class="sub" id="subText">선진국에서 날아오는 쓰레기를 합쳐 처리하라</div>
+</div>
+
+<!-- TICKER -->
+<div class="ticker" style="max-width:480px; margin:4px 0;">
+  <span class="ticker-inner" id="tickerInner"></span>
+</div>
+
+<!-- ROW 1: Country strip -->
+<div class="country-strip">
+  <div class="my-country">
+    <div class="my-flag" id="myCountryFlag">🏳️</div>
+    <div class="my-info">
+      <div class="my-label" id="myCountryTitle">우리나라</div>
+      <div class="my-name" id="myCountryName">—</div>
+      <div class="my-sub" id="victimLabel">피해 받는 중...</div>
+    </div>
+  </div>
+  <div class="divider-v"></div>
+  <div class="senders">
+    <div class="senders-label" id="sendingTitle">보내는 나라</div>
+    <div class="senders-flags">🇺🇸🇩🇪🇬🇧🇯🇵🇦🇺🇫🇷🇨🇦</div>
+    <div style="font-size:9px; color:rgba(255,200,100,0.65); font-family:'Roboto',sans-serif; margin-top:1px;" id="sendingLabel">날아오는 중...</div>
+  </div>
+</div>
+
+<!-- ROW 2: Canvas -->
+<div class="canvas-outer">
+  <div class="drop-zone" id="dropZone"><span id="dropHint">— 클릭하여 투하 —</span></div>
+  <div class="danger-line"></div>
+  <div class="canvas-wrap">
+    <canvas id="gameCanvas" width="480" height="460"></canvas>
+    <div class="overlay" id="startOverlay">
+      <h2 id="startFlag">🌍 쓰레기 대피소</h2>
+      <p id="startDesc">선진국에서 쓰레기가 날아옵니다.<br>같은 쓰레기끼리 합쳐 더 큰 쓰레기로 만들어라.<br>컨테이너가 넘치면 게임 오버.</p>
+      <button onclick="startGame()" id="startBtn">시작하기</button>
+    </div>
+    <div class="overlay" id="gameOverOverlay" style="display:none;">
+      <h2 id="overTitle">☠️ 게임 오버</h2>
+      <p id="overMessage">쓰레기에 압도당했습니다.</p>
+      <button onclick="startGame()" id="restartBtn">다시 시작</button>
+    </div>
+  </div>
+</div>
+
+<!-- ROW 3: Scores -->
+<div class="score-strip">
+  <div class="score-box">
+    <span class="score-label" id="scoreLabel">점수</span>
+    <span class="score-val" id="scoreDisplay">0</span>
+  </div>
+  <div class="score-box">
+    <span class="score-label" id="bestLabel">최고</span>
+    <span class="score-val" id="highScore">0</span>
+  </div>
+  <div class="score-box">
+    <span class="score-label" id="nextLabel">다음</span>
+    <span class="score-val" id="nextEmoji" style="font-size:18px;">📰</span>
+  </div>
+</div>
+
+<!-- ROW 4: Guide -->
+<div class="guide-panel">
+  <h3 id="guideTitle">합치기 가이드</h3>
+  <div class="guide-grid" id="trashGuide"></div>
+</div>
+
+<script>
+// ── i18n ──
+const isKorean = navigator.language.startsWith('ko');
+let lang = isKorean ? 'ko' : 'en';
+
+const T = {
+  ko: {
+    title: '🌏 TRASH INCOMING 🗑️',
+    sub: '선진국에서 날아오는 쓰레기를 합쳐 처리하라',
+    ticker: '🇺🇸 미국 → 연간 플라스틱 폐기물 수출 100만 톤+ &nbsp;|&nbsp; 🇩🇪 독일 → 전자폐기물 아프리카·아시아 불법수출 &nbsp;|&nbsp; 🇬🇧 영국 → 재활용 명목 개도국 폐기물 이전 &nbsp;|&nbsp; 🇯🇵 일본 → 동남아 플라스틱 쓰레기 수출 급증 &nbsp;|&nbsp; 선진국 발 오염이 지금 이곳으로 옵니다 ⚠️',
+    score: '점수', best: '최고', next: '다음',
+    guideTitle: '합치기 가이드', guideStart: '시작',
+    myCountryTitle: '우리나라', victimLabel: '피해 받는 중...',
+    sendingTitle: '보내는 나라', sendingLabel: '날아오는 중...',
+    dropHint: '— 클릭하여 투하 —',
+    startBtn: '시작하기', restartBtn: '다시 시작',
+    overTitle: '☠️ 게임 오버',
+    overMsg: s => `최종 점수: ${s}점`,
+    dangerLine: '⚠ 위험선',
+    langToggle: '🌐 EN',
+    youAre: c => `${c.flag} 당신은 ${c.nameKo}입니다`,
+    startDesc: '선진국에서 쓰레기가 날아옵니다.<br>같은 쓰레기끼리 합쳐 더 큰 쓰레기로 만들어라.<br>컨테이너가 넘치면 게임 오버.',
+  },
+  en: {
+    title: '🌏 TRASH INCOMING 🗑️',
+    sub: 'Merge pollution from wealthy nations before it buries you',
+    ticker: '🇺🇸 USA → exports 1M+ tons of plastic waste annually &nbsp;|&nbsp; 🇩🇪 Germany → illegal e-waste exports to Africa &amp; Asia &nbsp;|&nbsp; 🇬🇧 UK → offloads waste to developing nations &nbsp;|&nbsp; 🇯🇵 Japan → plastic waste exports surging to SE Asia &nbsp;|&nbsp; Pollution from rich countries is heading your way ⚠️',
+    score: 'SCORE', best: 'BEST', next: 'NEXT',
+    guideTitle: 'MERGE GUIDE', guideStart: 'start',
+    myCountryTitle: 'YOUR COUNTRY', victimLabel: 'Taking the hit...',
+    sendingTitle: 'SENDERS', sendingLabel: 'incoming...',
+    dropHint: '— tap to drop —',
+    startBtn: 'START', restartBtn: 'RETRY',
+    overTitle: '☠️ GAME OVER',
+    overMsg: s => `Final score: ${s}`,
+    dangerLine: '⚠ DANGER',
+    langToggle: '🇰🇷 한국어',
+    youAre: c => `${c.flag} You are ${c.nameEn}`,
+    startDesc: 'Pollution is incoming from wealthy nations.<br>Merge identical trash into bigger piles.<br>Game over if trash overflows.',
+  }
+};
+
+function applyLang() {
+  const t = T[lang];
+  document.getElementById('titleText').textContent = t.title;
+  document.getElementById('subText').textContent = t.sub;
+  document.getElementById('tickerInner').innerHTML = t.ticker;
+  document.getElementById('scoreLabel').textContent = t.score;
+  document.getElementById('bestLabel').textContent = t.best;
+  document.getElementById('nextLabel').textContent = t.next;
+  document.getElementById('guideTitle').textContent = t.guideTitle;
+  document.getElementById('myCountryTitle').textContent = t.myCountryTitle;
+  document.getElementById('victimLabel').textContent = t.victimLabel;
+  document.getElementById('sendingTitle').textContent = t.sendingTitle;
+  document.getElementById('sendingLabel').textContent = t.sendingLabel;
+  document.getElementById('dropHint').textContent = t.dropHint;
+  document.getElementById('startBtn').textContent = t.startBtn;
+  document.getElementById('restartBtn').textContent = t.restartBtn;
+  document.getElementById('overTitle').textContent = t.overTitle;
+  document.getElementById('langToggle').textContent = t.langToggle;
+  if (typeof myCountry !== 'undefined') {
+    document.getElementById('startFlag').textContent = t.youAre(myCountry);
+    document.getElementById('myCountryName').textContent = lang === 'ko' ? myCountry.nameKo : myCountry.nameEn;
+  }
+  document.getElementById('startDesc').innerHTML = t.startDesc;
+  buildGuide();
+}
+
+function toggleLang() {
+  lang = lang === 'ko' ? 'en' : 'ko';
+  applyLang();
+}
+
+// ── Data ──
+const TRASH = [
+  { emoji:'📰', ko:'신문지',   en:'Newspaper',    pts:1,   r:16, color:'#e8dcc8' },
+  { emoji:'🧴', ko:'플라스틱', en:'Plastic',       pts:2,   r:20, color:'#aed6f1' },
+  { emoji:'🥫', ko:'캔',       en:'Can',           pts:4,   r:24, color:'#ccc'    },
+  { emoji:'💻', ko:'노트북',   en:'Laptop',        pts:8,   r:28, color:'#85c1e9' },
+  { emoji:'📱', ko:'스마트폰', en:'Smartphone',    pts:16,  r:33, color:'#a9cce3' },
+  { emoji:'🏭', ko:'공장매연', en:'Factory Smog',  pts:30,  r:38, color:'#aaa'    },
+  { emoji:'🛢️', ko:'석유드럼', en:'Oil Drum',      pts:55,  r:44, color:'#5d6d7e' },
+  { emoji:'☢️', ko:'핵폐기물', en:'Nuclear Waste', pts:100, r:52, color:'#a9dfbf' },
+  { emoji:'🚢', ko:'오염선박', en:'Waste Ship',    pts:180, r:60, color:'#7fb3d3' },
+  { emoji:'🏗️', ko:'쓰레기산', en:'Trash Mtn',     pts:320, r:72, color:'#784212' },
+];
+
+const ORIGINS = [
+  { flag:'🇺🇸', ko:'미국',   en:'USA' },
+  { flag:'🇩🇪', ko:'독일',   en:'Germany' },
+  { flag:'🇬🇧', ko:'영국',   en:'UK' },
+  { flag:'🇯🇵', ko:'일본',   en:'Japan' },
+  { flag:'🇦🇺', ko:'호주',   en:'Australia' },
+  { flag:'🇫🇷', ko:'프랑스', en:'France' },
+  { flag:'🇨🇦', ko:'캐나다', en:'Canada' },
+];
+
+const VICTIMS = [
+  { flag:'🇧🇩', nameKo:'방글라데시', nameEn:'Bangladesh' },
+  { flag:'🇻🇳', nameKo:'베트남',     nameEn:'Vietnam' },
+  { flag:'🇵🇭', nameKo:'필리핀',     nameEn:'Philippines' },
+  { flag:'🇬🇭', nameKo:'가나',       nameEn:'Ghana' },
+  { flag:'🇲🇿', nameKo:'모잠비크',   nameEn:'Mozambique' },
+  { flag:'🇭🇹', nameKo:'아이티',     nameEn:'Haiti' },
+  { flag:'🇳🇬', nameKo:'나이지리아', nameEn:'Nigeria' },
+  { flag:'🇵🇰', nameKo:'파키스탄',   nameEn:'Pakistan' },
+  { flag:'🇮🇩', nameKo:'인도네시아', nameEn:'Indonesia' },
+  { flag:'🇹🇭', nameKo:'태국',       nameEn:'Thailand' },
+  { flag:'🇲🇾', nameKo:'말레이시아', nameEn:'Malaysia' },
+  { flag:'🇰🇭', nameKo:'캄보디아',   nameEn:'Cambodia' },
+];
+
+// Assign country
+const myCountry = VICTIMS[Math.floor(Math.random() * VICTIMS.length)];
+document.getElementById('myCountryFlag').textContent = myCountry.flag;
+document.getElementById('myCountryName').textContent = myCountry.nameKo;
+
+// ── Canvas ──
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const DANGER_Y = 64;
+const FLOOR_Y = H - 12;
+const GRAVITY   = 0.28;
+const BOUNCE     = 0.07;
+const WALL_BOUNCE= 0.08;
+const FRICTION   = 0.80;
+const PUSH_DAMP  = 0.16;
+
+let balls = [], score = 0, highScore = 0, gameRunning = false;
+let currentType = 0, nextType = 0, dropX = W/2, canDrop = true;
+let currentOrigin = null, nextOrigin = null;
+
+// ── Build guide (grid) ──
+function buildGuide() {
+  const el = document.getElementById('trashGuide');
+  el.innerHTML = '';
+  TRASH.forEach((t, i) => {
+    const div = document.createElement('div');
+    div.className = 'trash-cell';
+    const nameStr = lang === 'ko' ? t.ko : t.en;
+    const reqStr  = i === 0 ? (lang==='ko'?'시작':'start') : '×2';
+    div.innerHTML = `<span class="tc-emoji">${t.emoji}</span>
+      <span class="tc-name">${nameStr}</span>
+      <span class="tc-req">${reqStr}</span>`;
+    el.appendChild(div);
+  });
+}
+
+// ── Stars ──
+const starEl = document.getElementById('stars');
+for (let i = 0; i < 70; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const sz = Math.random()*2+0.5;
+  s.style.cssText=`width:${sz}px;height:${sz}px;top:${Math.random()*100}%;left:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${1.5+Math.random()*2}s`;
+  starEl.appendChild(s);
+}
+
+// ── Planes ──
+function spawnPlane() {
+  const strip = document.getElementById('planeStrip');
+  const origin = ORIGINS[Math.floor(Math.random()*ORIGINS.length)];
+  const plane = document.createElement('div');
+  plane.className = 'plane';
+  const dur = 9 + Math.random()*8;
+  plane.style.animationDuration = dur+'s';
+  plane.textContent = '✈️';
+  const label = document.createElement('span');
+  label.className = 'plane-label';
+  label.textContent = origin.flag + ' ' + (lang==='ko' ? origin.ko : origin.en);
+  plane.appendChild(label);
+  strip.appendChild(plane);
+  setTimeout(()=>plane.remove(), dur*1000+500);
+}
+spawnPlane();
+setInterval(spawnPlane, 6000);
+
+// ── Helpers ──
+function pickType() { return Math.floor(Math.random()*4); }
+function pickOrigin() { return ORIGINS[Math.floor(Math.random()*ORIGINS.length)]; }
+function makeBall(x,y,type,vx=0,vy=0,origin=null) {
+  return { x, y, vx, vy, type, r:TRASH[type].r, age:0, origin:origin||pickOrigin() };
+}
+
+// ── Draw ──
+function drawBall(b) {
+  const t = TRASH[b.type];
+  ctx.save();
+  ctx.shadowColor=t.color; ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+  ctx.fillStyle=t.color+'cc'; ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.font=`${b.r*1.1}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(t.emoji, b.x, b.y);
+  if (b.origin && b.r>=16) {
+    const fs=Math.max(10, b.r*0.5);
+    ctx.font=`${fs}px serif`;
+    ctx.fillText(b.origin.flag, b.x+b.r*0.58, b.y+b.r*0.58);
+  }
+  ctx.restore();
+}
+
+function drawPreview() {
+  if (!canDrop) return;
+  const t = TRASH[currentType];
+  const py = DANGER_Y + t.r + 4;
+  ctx.save();
+  ctx.globalAlpha=0.4;
+  ctx.beginPath(); ctx.arc(dropX,py,t.r,0,Math.PI*2);
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.setLineDash([4,4]); ctx.stroke();
+  ctx.globalAlpha=0.6;
+  ctx.font=`${t.r*1.1}px serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(t.emoji, dropX, py);
+  if (currentOrigin && t.r>=16) {
+    const fs=Math.max(10,t.r*0.5);
+    ctx.font=`${fs}px serif`;
+    ctx.fillText(currentOrigin.flag, dropX+t.r*0.58, py+t.r*0.58);
+  }
+  ctx.globalAlpha=0.1; ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.setLineDash([3,7]);
+  ctx.beginPath(); ctx.moveTo(dropX,DANGER_Y); ctx.lineTo(dropX,H); ctx.stroke();
+  ctx.restore();
+}
+
+function showFlash(x,y,text) {
+  const wrap = document.querySelector('.canvas-wrap');
+  const cr=canvas.getBoundingClientRect(), wr=wrap.getBoundingClientRect();
+  const el=document.createElement('div');
+  el.className='merge-flash'; el.textContent=text;
+  el.style.left=(cr.left-wr.left+x*(cr.width/W))+'px';
+  el.style.top=(cr.top-wr.top+y*(cr.height/H)-22)+'px';
+  wrap.appendChild(el);
+  setTimeout(()=>el.remove(),700);
+}
+
+// ── Physics ──
+function update() {
+  for (const b of balls) {
+    b.vy += GRAVITY;
+    b.x += b.vx; b.y += b.vy; b.age++;
+    b.vx = Math.max(-12,Math.min(12,b.vx));
+    b.vy = Math.max(-14,Math.min(16,b.vy));
+    if (b.y+b.r > FLOOR_Y) {
+      b.y=FLOOR_Y-b.r; b.vy*=-BOUNCE; b.vx*=FRICTION;
+      if (Math.abs(b.vy)<0.4) b.vy=0;
+    }
+    if (b.x-b.r < 0) { b.x=b.r; b.vx=Math.abs(b.vx)*WALL_BOUNCE; }
+    if (b.x+b.r > W) { b.x=W-b.r; b.vx=-Math.abs(b.vx)*WALL_BOUNCE; }
+  }
+  const toRemove=new Set(), toAdd=[];
+  for (let i=0;i<balls.length;i++) {
+    for (let j=i+1;j<balls.length;j++) {
+      if (toRemove.has(i)||toRemove.has(j)) continue;
+      const a=balls[i], b=balls[j];
+      const dx=b.x-a.x, dy=b.y-a.y;
+      const distSq=dx*dx+dy*dy, minD=a.r+b.r;
+      if (distSq>=minD*minD) continue;
+      const dist=Math.sqrt(distSq)||0.001;
+      if (a.type===b.type && a.type<TRASH.length-1 && a.age>4 && b.age>4) {
+        const mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
+        const nt=a.type+1;
+        toAdd.push(makeBall(mx,my,nt,0,-1.5));
+        toRemove.add(i); toRemove.add(j);
+        score+=TRASH[nt].pts;
+        document.getElementById('scoreDisplay').textContent=score;
+        showFlash(mx,my,TRASH[nt].emoji+' +'+TRASH[nt].pts);
+      } else {
+        const ov=(minD-dist)/2, nx=dx/dist, ny2=dy/dist;
+        a.x-=nx*ov; a.y-=ny2*ov; b.x+=nx*ov; b.y+=ny2*ov;
+        const rvx=b.vx-a.vx, rvy=b.vy-a.vy, dot=rvx*nx+rvy*ny2;
+        if (dot<0) {
+          const imp=dot*PUSH_DAMP;
+          a.vx-=imp*nx; a.vy-=imp*ny2; b.vx+=imp*nx; b.vy+=imp*ny2;
+        }
+      }
+    }
+  }
+  balls=balls.filter((_,i)=>!toRemove.has(i));
+  balls.push(...toAdd);
+  for (const b of balls) {
+    if (b.age>90 && b.y-b.r<DANGER_Y) { endGame(); return; }
+  }
+}
+
+function render() {
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#c9e8f5'); g.addColorStop(0.6,'#b0d0e8'); g.addColorStop(1,'#8fa8b8');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(170,150,130,0.12)'; ctx.fillRect(0,0,W,DANGER_Y+10);
+  ctx.fillStyle='#4a7c59'; ctx.fillRect(0,FLOOR_Y,W,H-FLOOR_Y);
+  drawPreview();
+  for (const b of balls) drawBall(b);
+  ctx.strokeStyle='rgba(230,57,70,0.6)'; ctx.setLineDash([6,4]); ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,DANGER_Y); ctx.lineTo(W,DANGER_Y); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle='rgba(230,57,70,0.75)';
+  ctx.font='11px Roboto,sans-serif'; ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.fillText(T[lang].dangerLine, 5, DANGER_Y+3);
+}
+
+function loop() {
+  if (!gameRunning) return;
+  update(); render();
+  requestAnimationFrame(loop);
+}
+
+function drop() {
+  if (!canDrop||!gameRunning) return;
+  const t=TRASH[currentType];
+  balls.push(makeBall(dropX,DANGER_Y+t.r+4,currentType,0,0,currentOrigin));
+  canDrop=false;
+  currentType=nextType; currentOrigin=nextOrigin;
+  nextType=pickType(); nextOrigin=pickOrigin();
+  document.getElementById('nextEmoji').textContent=TRASH[nextType].emoji+' '+nextOrigin.flag;
+  setTimeout(()=>{ canDrop=true; },650);
+}
+
+function getX(e) {
+  const rect=canvas.getBoundingClientRect();
+  const cx=e.touches?e.touches[0].clientX:e.clientX;
+  return (cx-rect.left)*(W/rect.width);
+}
+
+function clampX(x) { return Math.max(TRASH[currentType].r, Math.min(W-TRASH[currentType].r, x)); }
+
+canvas.addEventListener('mousemove',e=>{ if(!gameRunning)return; dropX=clampX(getX(e)); });
+canvas.addEventListener('click',e=>{ dropX=clampX(getX(e)); drop(); });
+canvas.addEventListener('touchmove',e=>{ e.preventDefault(); if(!gameRunning)return; dropX=clampX(getX(e)); },{passive:false});
+canvas.addEventListener('touchend',e=>{ e.preventDefault(); drop(); },{passive:false});
+const dz=document.getElementById('dropZone');
+dz.addEventListener('mousemove',e=>{ if(!gameRunning)return; dropX=clampX(getX({clientX:e.clientX})); });
+dz.addEventListener('click',()=>drop());
+dz.addEventListener('touchend',e=>{ e.preventDefault(); drop(); },{passive:false});
+
+function startGame() {
+  balls=[]; score=0;
+  document.getElementById('scoreDisplay').textContent='0';
+  document.getElementById('startOverlay').style.display='none';
+  document.getElementById('gameOverOverlay').style.display='none';
+  currentType=pickType(); currentOrigin=pickOrigin();
+  nextType=pickType(); nextOrigin=pickOrigin();
+  document.getElementById('nextEmoji').textContent=TRASH[nextType].emoji+' '+nextOrigin.flag;
+  canDrop=true; gameRunning=true;
+  requestAnimationFrame(loop);
+}
+
+function endGame() {
+  gameRunning=false;
+  if (score>highScore) { highScore=score; document.getElementById('highScore').textContent=highScore; }
+  document.getElementById('overMessage').textContent=T[lang].overMsg(score);
+  document.getElementById('gameOverOverlay').style.display='flex';
+}
+
+// Init
+applyLang();
+render();
+</script>
+</body>
+</html>
